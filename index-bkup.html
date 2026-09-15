@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supermarket Simulator — Product License Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary:#0d1117;--bg-secondary:#161b22;--bg-tertiary:#21262d;
+      --bg-card:rgba(22,27,34,0.85);--bg-input:#0d1117;
+      --border:#30363d;--border-focus:#58a6ff;
+      --text-primary:#e6edf3;--text-secondary:#8b949e;--text-muted:#6e7681;
+      --accent:#58a6ff;--accent-bg:rgba(31,111,235,0.15);
+      --green:#39d353;--green-bg:rgba(57,211,83,0.15);
+      --red:#f85149;--red-bg:rgba(248,81,73,0.15);
+      --orange:#d29922;--purple:#bc8cff;
+      --radius:10px;--radius-sm:6px;
+      --shadow:0 8px 32px rgba(0,0,0,0.4);--shadow-sm:0 2px 8px rgba(0,0,0,0.3);
+      --transition:0.2s cubic-bezier(0.4,0,0.2,1);
+      --glass-border:rgba(48,54,61,0.6);--sidebar-w:240px;--toolbar-h:46px;--statusbar-h:28px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-primary);color:var(--text-primary);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+    /* SIDEBAR */
+    .sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);height:calc(100vh - var(--statusbar-h));background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:fixed;left:0;top:0;z-index:50;}
+    .sidebar-header{padding:12px 12px 8px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(31,111,235,0.1),rgba(88,166,255,0.04));flex-shrink:0;}
+    .sidebar-header h1{font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .sidebar-header .sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+    .sidebar-header .subsub{font-size:10px;color:var(--text-muted);margin-top:1px;}
+    .sidebar-header .subsub a{color:var(--text-muted);}
+    .sidebar-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px;}
+    .sidebar-scroll::-webkit-scrollbar{width:4px;}
+    .sidebar-scroll::-webkit-scrollbar-track{background:transparent;}
+    .sidebar-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+    .sb-section{margin-bottom:10px;}
+    .sb-title{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+    .sb-btn{display:flex;align-items:center;gap:6px;width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-tertiary);color:var(--text-primary);font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;transition:all var(--transition);margin-bottom:3px;text-align:left;}
+    .sb-btn:hover{background:var(--border);border-color:var(--text-muted);transform:translateX(2px);}
+    .sb-btn.primary{background:linear-gradient(135deg,#1f6feb,#388bfd);border-color:#388bfd;color:#fff;}
+    .sb-btn.primary:hover{background:linear-gradient(135deg,#388bfd,#58a6ff);}
+    .sb-btn.success{background:var(--green-bg);border-color:rgba(57,211,83,0.3);color:var(--green);}
+    .sb-btn.success:hover{background:rgba(57,211,83,0.25);border-color:var(--green);}
+    .sb-btn.danger{background:var(--red-bg);border-color:rgba(248,81,73,0.3);color:var(--red);}
+    .sb-btn.danger:hover{background:rgba(248,81,73,0.25);border-color:var(--red);}
+    .sb-btn-row{display:flex;gap:3px;}
+    .sb-btn-row .sb-btn{flex:1;justify-content:center;padding:5px 3px;font-size:10px;}
+    .sb-divider{height:1px;background:var(--border);margin:6px 0;}
+    .sb-input{width:100%;padding:4px 7px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:inherit;font-size:11px;transition:border-color var(--transition);margin-bottom:3px;}
+    .sb-input:focus{outline:none;border-color:var(--border-focus);}
+    .sb-input::placeholder{color:var(--text-muted);}
+    .sb-label{font-size:9px;color:var(--text-secondary);margin-bottom:1px;display:block;}
+
+    /* TOOLBAR */
+    .toolbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:var(--toolbar-h);background:var(--bg-secondary);border-bottom:1px solid var(--border);display:none;align-items:center;gap:6px;padding:0 12px;z-index:40;overflow-x:auto;}
+    .toolbar.visible{display:flex;}
+    .tb-sep{width:1px;height:24px;background:var(--border);flex-shrink:0;}
+    .tb-label{font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-bg);padding:3px 10px;border-radius:12px;border:1px solid rgba(88,166,255,0.2);white-space:nowrap;flex-shrink:0;}
+    .tb-btn{padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-tertiary);color:var(--text-primary);font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;transition:all var(--transition);white-space:nowrap;flex-shrink:0;}
+    .tb-btn:hover{background:var(--border);border-color:var(--text-muted);}
+    .tb-btn.success{background:var(--green-bg);border-color:rgba(57,211,83,0.3);color:var(--green);}
+    .tb-btn.success:hover{background:rgba(57,211,83,0.25);}
+    .tb-btn.danger{background:var(--red-bg);border-color:rgba(248,81,73,0.3);color:var(--red);}
+    .tb-btn.danger:hover{background:rgba(248,81,73,0.25);}
+
+    /* STATUS BAR */
+    .statusbar{position:fixed;bottom:0;left:0;right:0;height:var(--statusbar-h);background:var(--bg-secondary);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 14px;font-size:10px;color:var(--text-muted);z-index:60;gap:12px;}
+    .statusbar .dot{width:6px;height:6px;border-radius:50%;background:var(--text-muted);flex-shrink:0;}
+    .statusbar .dot.active{background:var(--green);}
+    .statusbar .spacer{flex:1;}
+
+    /* MAIN */
+    .main{margin-left:var(--sidebar-w);margin-top:var(--toolbar-h);flex:1;height:calc(100vh - var(--toolbar-h) - var(--statusbar-h));overflow-y:auto;padding:12px 16px 16px;}
+    .main.no-toolbar{margin-top:0;height:calc(100vh - var(--statusbar-h));}
+    .main::-webkit-scrollbar{width:6px;}
+    .main::-webkit-scrollbar-track{background:transparent;}
+    .main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+    /* COLLAPSIBLE SECTIONS (all cards) */
+    .section{margin-bottom:10px;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);transition:all var(--transition);user-select:none;}
+    .section-head:hover{border-color:var(--accent);background:rgba(88,166,255,0.05);}
+    .section-head h3{font-size:12px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:6px;}
+    .section-head .arrow{transition:transform 0.3s ease;font-size:10px;color:var(--text-secondary);}
+    .section-head.open .arrow{transform:rotate(180deg);}
+    .section-body{overflow:hidden;max-height:0;opacity:0;transition:max-height 0.4s ease,opacity 0.3s ease,padding 0.3s ease;padding:0 12px;border:1px solid transparent;border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);}
+    .section-body.open{max-height:2000px;opacity:1;padding:12px;border-color:var(--border);background:var(--bg-card);}
+
+    .form-group{margin-bottom:8px;}
+    .form-group label{display:block;font-size:11px;font-weight:500;color:var(--text-secondary);margin-bottom:2px;}
+    .form-control{width:100%;padding:6px 9px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:inherit;font-size:12px;transition:all var(--transition);}
+    .form-control:focus{outline:none;border-color:var(--border-focus);box-shadow:0 0 0 2px rgba(88,166,255,0.1);}
+    select.form-control{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:26px;}
+    .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;}
+    .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
+    .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+    .sub-header{font-size:11px;font-weight:600;color:var(--purple);margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+    .editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    @media(max-width:1100px){.editor-grid{grid-template-columns:1fr;}}
+    .editor-grid+.editor-grid{margin-top:10px;}
+
+    /* Toggle switch */
+    .toggle-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+    .toggle-row label{margin-bottom:0;font-size:11px;color:var(--text-secondary);cursor:pointer;}
+    .toggle{position:relative;width:34px;height:18px;flex-shrink:0;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .toggle .slider{position:absolute;inset:0;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:all var(--transition);}
+    .toggle .slider::before{content:'';position:absolute;width:12px;height:12px;left:2px;top:2px;background:var(--text-muted);border-radius:50%;transition:all var(--transition);}
+    .toggle input:checked+.slider{background:var(--accent-bg);border-color:var(--accent);}
+    .toggle input:checked+.slider::before{transform:translateX(16px);background:var(--accent);}
+
+    /* Color input */
+    .color-row{display:flex;gap:5px;align-items:center;}
+    .color-row input[type="color"]{width:30px;height:26px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);cursor:pointer;padding:1px;}
+    .color-row input[type="text"]{flex:1;}
+
+    .placement-row{display:flex;gap:5px;align-items:flex-end;}
+    .placement-row input{flex:1;}
+    .placement-row .p-btn{flex-shrink:0;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-tertiary);color:var(--text-primary);cursor:pointer;font-size:12px;transition:all var(--transition);}
+    .placement-row .p-btn:hover{background:var(--border);}
+    .placement-row .p-btn.rm{color:var(--red);border-color:rgba(248,81,73,0.3);}
+
+    /* MODALS */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:10000;justify-content:center;align-items:center;}
+    .modal-overlay.visible{display:flex;}
+    .modal-box{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:modalIn 0.2s ease;}
+    .modal-box.wide{max-width:700px;}
+    .modal-box.converter{max-width:95vw;width:1200px;height:80vh;display:flex;flex-direction:column;}
+    @keyframes modalIn{from{transform:scale(0.93);opacity:0;}to{transform:scale(1);opacity:1;}}
+    .modal-box h3{font-size:14px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+    .modal-box p{font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;}
+    .modal-actions{display:flex;gap:5px;justify-content:flex-end;margin-top:10px;}
+    .modal-actions .sb-btn{width:auto;margin-bottom:0;}
+    textarea.modal-ta{width:100%;height:200px;resize:vertical;font-family:'Consolas','Monaco',monospace;font-size:11px;line-height:1.5;padding:8px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);}
+    textarea.modal-ta:focus{outline:none;border-color:var(--border-focus);}
+    .error-msg{color:var(--red);font-size:11px;margin-top:5px;padding:5px 8px;background:var(--red-bg);border-radius:var(--radius-sm);border:1px solid rgba(248,81,73,0.2);display:none;}
+    .error-msg.visible{display:block;}
+
+    /* Converter modal */
+    .conv-workspace{display:flex;flex:1;gap:12px;min-height:0;}
+    .conv-panel{flex:1;display:flex;flex-direction:column;min-width:0;}
+    .conv-panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+    .conv-panel-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;}
+    .conv-panel textarea{flex:1;width:100%;background:#0d0f12;border:1px solid var(--border);color:#7dd3fc;border-radius:var(--radius-sm);padding:8px;font-family:'Consolas','Monaco',monospace;font-size:11px;resize:none;white-space:pre;overflow:auto;}
+    .conv-panel textarea:focus{outline:none;border-color:var(--accent);}
+    .conv-center{display:flex;flex-direction:column;justify-content:center;align-items:center;width:120px;gap:8px;flex-shrink:0;}
+    .conv-toggle{background:linear-gradient(135deg,#1f6feb,#388bfd);color:#fff;padding:14px 16px;border-radius:8px;font-size:13px;font-weight:700;text-align:center;width:100%;cursor:pointer;border:none;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all var(--transition);}
+    .conv-toggle:hover{background:linear-gradient(135deg,#388bfd,#58a6ff);transform:scale(1.02);}
+    .conv-status{font-size:11px;font-weight:600;text-align:center;min-height:18px;}
+    .conv-status.ok{color:var(--green);}
+    .conv-status.err{color:var(--red);}
+
+    /* TOAST */
+    .toast-container{position:fixed;bottom:calc(var(--statusbar-h) + 8px);right:16px;z-index:99999;display:flex;flex-direction:column-reverse;gap:5px;}
+    .toast{padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;color:#fff;box-shadow:var(--shadow);max-width:320px;animation:toastIn 0.25s ease,toastOut 0.3s ease 2.7s forwards;}
+    .toast.success{background:rgba(57,211,83,0.92);color:#0d1117;}
+    .toast.error{background:rgba(248,81,73,0.92);}
+    .toast.info{background:rgba(88,166,255,0.92);color:#0d1117;}
+    .toast.warning{background:rgba(210,153,34,0.92);color:#0d1117;}
+    @keyframes toastIn{from{transform:translateX(80px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    @keyframes toastOut{from{opacity:1;}to{opacity:0;transform:translateY(8px);}}
+
+    .splash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;color:var(--text-muted);text-align:center;}
+    .splash .icon{font-size:48px;margin-bottom:12px;opacity:0.5;}
+    .splash h2{font-size:18px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;}
+    .splash p{font-size:13px;max-width:360px;line-height:1.6;}
+    .editor-area{display:none;}
+    .editor-area.visible{display:block;}
+    #fileInput,#gridFileInput{display:none;}
+    kbd{display:inline-block;padding:1px 4px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:3px;font-family:inherit;font-size:9px;color:var(--text-secondary);}
+    .kbd-row{font-size:9px;color:var(--text-muted);margin-top:3px;line-height:1.8;}
+    .opt-tag{font-size:9px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px;}
+  </style>
+</head>
+<body>
+
+<input type="file" id="fileInput" accept=".json" onchange="handleFileLoadFallback(event)">
+<input type="file" id="gridFileInput" accept=".json" onchange="handleGridFileLoad(event)">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>🛒 Product License Editor</h1>
+    <div class="sub">Supermarket Simulator · CPL 2.1.2</div>
+    <div class="subsub">By: <a href="http://twitch.tv/thawiznator" target="_blank">ThaWizanator</a></div>
+  </div>
+  <div class="sidebar-scroll">
+    <div class="sb-section">
+      <div class="sb-title">📂 File</div>
+      <button class="sb-btn primary" onclick="openFile()">📁 Open File…</button>
+      <button class="sb-btn success" id="saveBtn" onclick="saveFile()" style="display:none;">💾 Save</button>
+      <button class="sb-btn" onclick="openImportExport()">📋 Import / Export JSON</button>
+      <div class="sb-btn-row">
+        <button class="sb-btn success" onclick="copyJSON()">📋 Copy</button>
+        <button class="sb-btn" onclick="downloadJSON()">💾 Download</button>
+      </div>
+      <div id="fileInfo" style="font-size:10px;color:var(--text-muted);margin-top:3px;word-break:break-all;display:none;">
+        <span style="color:var(--green);">●</span> <span id="fileName"></span>
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section" id="gridImportSection" style="display:none;">
+      <div class="sb-title">🔄 Grid Import</div>
+      <button class="sb-btn" onclick="openGridFile()">📐 Import Grid Layouts…</button>
+      <div id="gridFileInfo" style="font-size:10px;color:var(--text-muted);margin-top:3px;word-break:break-all;display:none;">
+        <span style="color:var(--orange);">●</span> <span id="gridFileName"></span>
+      </div>
+    </div>
+    <div class="sb-divider" id="gridDivider" style="display:none;"></div>
+    <div class="sb-section" id="converterSection" style="display:none;">
+      <div class="sb-title">📊 Tools</div>
+      <button class="sb-btn" onclick="openConverter()">📊 Config Converter (JSON ↔ Sheets)</button>
+    </div>
+    <div class="sb-divider" id="converterDivider" style="display:none;"></div>
+    <div class="sb-section" id="searchSection" style="display:none;">
+      <div class="sb-title">🔍 Search</div>
+      <div class="sb-label">License ID</div>
+      <input class="sb-input" type="number" id="searchLicenseId" placeholder="e.g. 100100" onkeydown="if(event.key==='Enter')doSearch()">
+      <div class="sb-label">Product ID</div>
+      <input class="sb-input" type="number" id="searchProductId" placeholder="e.g. 200000" onkeydown="if(event.key==='Enter')doSearch()">
+      <div class="sb-label">License Name</div>
+      <input class="sb-input" type="text" id="searchLicenseName" placeholder="partial…" onkeydown="if(event.key==='Enter')doSearch()">
+      <div class="sb-label">Product Name</div>
+      <input class="sb-input" type="text" id="searchProductName" placeholder="partial…" onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="sb-btn primary" onclick="doSearch()" style="margin-top:3px;">🔍 Search</button>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section">
+      <div class="sb-title">⌨️ Shortcuts</div>
+      <div class="kbd-row">
+        <kbd>←</kbd>/<kbd>→</kbd> Prev/Next Product<br>
+        <kbd>Ctrl</kbd>+<kbd>←</kbd>/<kbd>→</kbd> Prev/Next License<br>
+        <kbd>Ctrl</kbd>+<kbd>S</kbd> Save / Copy JSON
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- TOOLBAR -->
+<div class="toolbar" id="toolbar">
+  <span class="tb-label" id="tbLicCounter">License 0 / 0</span>
+  <button class="tb-btn" onclick="goFirstLicense()">|◀◀</button>
+  <button class="tb-btn" onclick="goPrevLicense()">◀ Prev</button>
+  <button class="tb-btn" onclick="goNextLicense()">Next ▶</button>
+  <button class="tb-btn" onclick="goLastLicense()">▶▶|</button>
+  <span class="tb-sep"></span>
+  <span class="tb-label" id="tbProdCounter">Product 0 / 0</span>
+  <button class="tb-btn" onclick="goPrevProduct()">◀ Prev</button>
+  <button class="tb-btn" onclick="goNextProduct()">Next ▶</button>
+  <span class="tb-sep"></span>
+  <button class="tb-btn success" onclick="addNewLicense()">➕ License</button>
+  <button class="tb-btn success" onclick="addNewProduct()">➕ Product</button>
+  <button class="tb-btn" onclick="duplicateProduct()">📄 Duplicate</button>
+  <button class="tb-btn danger" onclick="confirmDeleteProduct()">🗑 Product</button>
+  <button class="tb-btn danger" onclick="confirmDeleteLicense()">🗑 License</button>
+</div>
+
+<!-- MAIN -->
+<div class="main no-toolbar" id="mainArea">
+  <div class="splash" id="splash">
+    <div class="icon">🛒</div>
+    <h2>No Data Loaded</h2>
+    <p>Click <strong>"Open File…"</strong> in the sidebar to browse for your <code>products.json</code>, or use <strong>"Import / Export JSON"</strong> to paste it in.</p>
+  </div>
+
+  <div class="editor-area" id="editorArea">
+    <!-- ROW 1: License + Product -->
+    <div class="editor-grid">
+      <div class="section">
+        <div class="section-head open" onclick="toggleS(this)"><h3>📜 License Details</h3><span class="arrow">▼</span></div>
+        <div class="section-body open">
+          <div class="form-row">
+            <div class="form-group"><label>License ID</label><input type="number" class="form-control" id="licId" onchange="uLic('ID',this.value,'int')"></div>
+            <div class="form-group"><label>License Name</label><input type="text" class="form-control" id="licName" onchange="uLic('LicenseName',this.value,'str')"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Required Player Level</label><input type="number" class="form-control" id="licLevel" min="1" onchange="uLic('RequiredPlayerLevel',this.value,'int')"></div>
+            <div class="form-group"><label>Purchasing Cost</label><input type="number" class="form-control" id="licCost" min="0" onchange="uLic('PurchasingCost',this.value,'int')"></div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-head open" onclick="toggleS(this)"><h3>📦 Product Info</h3><span class="arrow">▼</span></div>
+        <div class="section-body open">
+          <div class="form-row">
+            <div class="form-group"><label>Product ID</label><input type="number" class="form-control" id="prodId" onchange="uProd('ID',this.value,'int')"></div>
+            <div class="form-group"><label>Product Name</label><input type="text" class="form-control" id="prodName" onchange="uProd('ProductName',this.value,'str')"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Brand</label><input type="text" class="form-control" id="prodBrand" onchange="uProd('ProductBrand',this.value,'str')"></div>
+            <div class="form-group"><label>Name Size Ratio</label><input type="number" class="form-control" id="prodNameRatio" step="0.1" min="0" onchange="uProd('ProductNameSizeRatio',this.value,'float')"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Display Type</label><select class="form-control" id="prodDisplayType" onchange="uProd('ProductDisplayType',this.value,'str')"><option value="SHELF">SHELF</option><option value="FREEZER">FREEZER</option><option value="FRIDGE">FRIDGE</option></select></div>
+            <div class="form-group"><label>Category</label><select class="form-control" id="prodCategory" onchange="uProd('Category',this.value,'str')"><option value="EDIBLE">EDIBLE</option><option value="DRINK">DRINK</option><option value="BAKERY">BAKERY</option><option value="FRUIT">FRUIT</option><option value="VEGETABLE">VEGETABLE</option><option value="MEAT">MEAT</option><option value="CLEANING">CLEANING</option><option value="HYGIENE">HYGIENE</option></select></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Assets + Pricing -->
+    <div class="editor-grid">
+      <div class="section">
+        <div class="section-head open" onclick="toggleS(this)"><h3>🧊 Assets &amp; Prefab</h3><span class="arrow">▼</span></div>
+        <div class="section-body open">
+          <div class="form-group"><label>Product Icon</label><input type="text" class="form-control" id="prodIcon" onchange="uProd('ProductIcon',this.value,'str')"></div>
+          <div class="form-row"><div class="form-group"><label>Box Icon</label><input type="text" class="form-control" id="prodBoxIcon" onchange="uProd('BoxIcon',this.value,'str')"></div><div class="form-group"><label>Label Icon <span class="opt-tag">(opt)</span></label><input type="text" class="form-control" id="prodLabelIcon" placeholder="defaults to Product Icon" onchange="uProdOpt('LabelIcon',this.value,'str')"></div></div>
+          <div class="form-row"><div class="form-group"><label>OBJ Path</label><input type="text" class="form-control" id="prefabObj" onchange="uPrefab('objPath',this.value)"></div><div class="form-group"><label>MTL Path</label><input type="text" class="form-control" id="prefabMtl" onchange="uPrefab('mtlPath',this.value)"></div></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-head open" onclick="toggleS(this)"><h3>💰 Pricing &amp; Quantity</h3><span class="arrow">▼</span></div>
+        <div class="section-body open">
+          <div class="form-row"><div class="form-group"><label>Amt On Purchase</label><input type="number" class="form-control" id="prodAmount" min="1" onchange="uProd('ProductAmountOnPurchase',this.value,'int')"></div><div class="form-group"><label>Base Price</label><input type="number" class="form-control" id="prodBasePrice" step="0.01" min="0" onchange="uProd('BasePrice',this.value,'float')"></div></div>
+          <div class="form-row"><div class="form-group"><label>Min Dynamic Price</label><input type="number" class="form-control" id="prodMinPrice" step="0.01" min="0" onchange="uProd('MinDynamicPrice',this.value,'float')"></div><div class="form-group"><label>Max Dynamic Price</label><input type="number" class="form-control" id="prodMaxPrice" step="0.01" min="0" onchange="uProd('MaxDynamicPrice',this.value,'float')"></div></div>
+          <div class="form-row"><div class="form-group"><label>Optimum Profit Rate</label><input type="number" class="form-control" id="prodOptProfit" min="0" onchange="uProd('OptimumProfitRate',this.value,'int')"></div><div class="form-group"><label>Max Profit Rate</label><input type="number" class="form-control" id="prodMaxProfit" min="0" onchange="uProd('MaxProfitRate',this.value,'int')"></div></div>
+          <div class="sub-header">📐 Item Grid Size</div>
+          <div class="form-row-2" style="max-width:200px;"><div class="form-group"><label>Width</label><input type="number" class="form-control" id="gridSizeW" min="1" onchange="uItemGridSize()"></div><div class="form-group"><label>Height</label><input type="number" class="form-control" id="gridSizeH" min="1" onchange="uItemGridSize()"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Behavior + Vending -->
+    <div class="editor-grid">
+      <div class="section">
+        <div class="section-head" onclick="toggleS(this)"><h3>⚙️ Behavior &amp; Display <span class="opt-tag">(optional)</span></h3><span class="arrow">▼</span></div>
+        <div class="section-body">
+          <div class="toggle-row"><label class="toggle"><input type="checkbox" id="optCanPlaceVending" onchange="uProdOpt('CanPlaceVending',this.checked?1:undefined,'toggle')"><span class="slider"></span></label><label>Can Place in Vending Machine</label></div>
+          <div class="toggle-row"><label class="toggle"><input type="checkbox" id="optIsBakery" onchange="uProdOpt('IsBakeryProduct',this.checked?1:undefined,'toggle')"><span class="slider"></span></label><label>Is Bakery Product</label></div>
+          <div class="toggle-row"><label class="toggle"><input type="checkbox" id="optCanNotRotate" onchange="uProdOpt('CanNOTRotate',this.checked?true:undefined,'toggle')"><span class="slider"></span></label><label>Cannot Rotate (upright in crate)</label></div>
+          <div class="form-row"><div class="form-group"><label>Custom Category</label><input type="text" class="form-control" id="optCustomCat" placeholder='"Pharmacy"' onchange="uProdOpt('CustomCategory',this.value||undefined,'str')"></div><div class="form-group"><label>Placement Speed</label><input type="number" class="form-control" id="optPlaceSpeed" step="0.1" min="0" placeholder="1.0" onchange="uProdOpt('PlacementSpeedMultiplier',this.value?parseFloat(this.value):undefined,'raw')"></div></div>
+          <div class="form-group"><label>Product Name Color</label><div class="color-row"><input type="color" id="optNameColorPick" value="#e6edf3" onchange="document.getElementById('optNameColor').value=this.value;uProdOpt('ProductNameColor',this.value,'str')"><input type="text" class="form-control" id="optNameColor" placeholder="#RRGGBB" onchange="uProdOpt('ProductNameColor',this.value||undefined,'str');try{document.getElementById('optNameColorPick').value=this.value.substring(0,7)}catch(e){}"></div></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-head" onclick="toggleS(this)"><h3>🥫 Vending Machine <span class="opt-tag">(optional)</span></h3><span class="arrow">▼</span></div>
+        <div class="section-body">
+          <div class="form-row"><div class="form-group"><label>Max Slot Count</label><input type="number" class="form-control" id="optVendSlot" min="1" placeholder="16" onchange="uProdOpt('MaxVendingSlotCount',this.value?parseInt(this.value):undefined,'raw')"></div><div class="form-group"><label>Max Column Count</label><input type="number" class="form-control" id="optVendCol" min="1" placeholder="2" onchange="uProdOpt('MaxVendingColumnCount',this.value?parseInt(this.value):undefined,'raw')"></div></div>
+          <div class="form-group"><label>Scale Multiplier</label><input type="number" class="form-control" id="optVendScale" step="0.01" min="0" placeholder="0.8" onchange="uProdOpt('VendingScaleMultiplier',this.value?parseFloat(this.value):undefined,'raw')"></div>
+          <div class="form-group"><label>Rotation Euler (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optVendRot0" step="0.1" placeholder="0" onchange="uOptVec3('VendingRotationEuler','optVendRot')"><input type="number" class="form-control" id="optVendRot1" step="0.1" placeholder="0" onchange="uOptVec3('VendingRotationEuler','optVendRot')"><input type="number" class="form-control" id="optVendRot2" step="0.1" placeholder="0" onchange="uOptVec3('VendingRotationEuler','optVendRot')"></div></div>
+          <div class="sub-header">📐 Crate Size <span class="opt-tag">(optional)</span></div>
+          <div class="form-group"><label>Item Grid Size In Crate (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optCrate0" min="0" placeholder="0" onchange="uOptVec3('ItemGridSizeInCrate','optCrate')"><input type="number" class="form-control" id="optCrate1" min="0" placeholder="0" onchange="uOptVec3('ItemGridSizeInCrate','optCrate')"><input type="number" class="form-control" id="optCrate2" min="0" placeholder="0" onchange="uOptVec3('ItemGridSizeInCrate','optCrate')"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Hand + Box Model -->
+    <div class="editor-grid">
+      <div class="section">
+        <div class="section-head" onclick="toggleS(this)"><h3>🤚 Hand &amp; Model Tweaks <span class="opt-tag">(optional)</span></h3><span class="arrow">▼</span></div>
+        <div class="section-body">
+          <div class="form-group"><label>Hand Offset (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optHand0" step="0.001" placeholder="0" onchange="uOptVec3('HandOffset','optHand')"><input type="number" class="form-control" id="optHand1" step="0.001" placeholder="0" onchange="uOptVec3('HandOffset','optHand')"><input type="number" class="form-control" id="optHand2" step="0.001" placeholder="0" onchange="uOptVec3('HandOffset','optHand')"></div></div>
+          <div class="form-group"><label>Hand Rotation Offset (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optHandRot0" step="0.1" placeholder="0" onchange="uOptVec3('HandRotationOffset','optHandRot')"><input type="number" class="form-control" id="optHandRot1" step="0.1" placeholder="0" onchange="uOptVec3('HandRotationOffset','optHandRot')"><input type="number" class="form-control" id="optHandRot2" step="0.1" placeholder="0" onchange="uOptVec3('HandRotationOffset','optHandRot')"></div></div>
+          <div class="sb-divider"></div>
+          <div class="form-group"><label>Prefab Position (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optPrefPos0" step="0.001" placeholder="0" onchange="uOptVec3('prefabLocalPosition','optPrefPos')"><input type="number" class="form-control" id="optPrefPos1" step="0.001" placeholder="0" onchange="uOptVec3('prefabLocalPosition','optPrefPos')"><input type="number" class="form-control" id="optPrefPos2" step="0.001" placeholder="0" onchange="uOptVec3('prefabLocalPosition','optPrefPos')"></div></div>
+          <div class="form-group"><label>Prefab Rotation (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optPrefRot0" step="0.1" placeholder="0" onchange="uOptVec3('prefabLocalRotation','optPrefRot')"><input type="number" class="form-control" id="optPrefRot1" step="0.1" placeholder="0" onchange="uOptVec3('prefabLocalRotation','optPrefRot')"><input type="number" class="form-control" id="optPrefRot2" step="0.1" placeholder="0" onchange="uOptVec3('prefabLocalRotation','optPrefRot')"></div></div>
+          <div class="form-group"><label>Prefab Scale (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optPrefScl0" step="0.01" placeholder="1" onchange="uOptVec3('prefabLocalScale','optPrefScl')"><input type="number" class="form-control" id="optPrefScl1" step="0.01" placeholder="1" onchange="uOptVec3('prefabLocalScale','optPrefScl')"><input type="number" class="form-control" id="optPrefScl2" step="0.01" placeholder="1" onchange="uOptVec3('prefabLocalScale','optPrefScl')"></div></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-head" onclick="toggleS(this)"><h3>📤 Custom Box Model <span class="opt-tag">(optional)</span></h3><span class="arrow">▼</span></div>
+        <div class="section-body">
+          <div class="form-row"><div class="form-group"><label>Box OBJ Path</label><input type="text" class="form-control" id="optBoxObj" onchange="uProdOpt('boxObjPath',this.value||undefined,'str')"></div><div class="form-group"><label>Box MTL Path</label><input type="text" class="form-control" id="optBoxMtl" onchange="uProdOpt('boxMtlPath',this.value||undefined,'str')"></div></div>
+          <div class="form-group"><label>Box Position (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optBoxPos0" step="0.001" placeholder="0" onchange="uOptVec3('boxLocalPosition','optBoxPos')"><input type="number" class="form-control" id="optBoxPos1" step="0.001" placeholder="0" onchange="uOptVec3('boxLocalPosition','optBoxPos')"><input type="number" class="form-control" id="optBoxPos2" step="0.001" placeholder="0" onchange="uOptVec3('boxLocalPosition','optBoxPos')"></div></div>
+          <div class="form-group"><label>Box Rotation (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optBoxRot0" step="0.1" placeholder="0" onchange="uOptVec3('boxLocalRotation','optBoxRot')"><input type="number" class="form-control" id="optBoxRot1" step="0.1" placeholder="0" onchange="uOptVec3('boxLocalRotation','optBoxRot')"><input type="number" class="form-control" id="optBoxRot2" step="0.1" placeholder="0" onchange="uOptVec3('boxLocalRotation','optBoxRot')"></div></div>
+          <div class="form-group"><label>Box Scale (X, Y, Z)</label><div class="form-row-3"><input type="number" class="form-control" id="optBoxScl0" step="0.01" placeholder="1" onchange="uOptVec3('boxLocalScale','optBoxScl')"><input type="number" class="form-control" id="optBoxScl1" step="0.01" placeholder="1" onchange="uOptVec3('boxLocalScale','optBoxScl')"><input type="number" class="form-control" id="optBoxScl2" step="0.01" placeholder="1" onchange="uOptVec3('boxLocalScale','optBoxScl')"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 5: Grid Layouts -->
+    <div class="editor-grid">
+      <div class="section">
+        <div class="section-head" onclick="toggleS(this)"><h3>📦 Grid Layout In Box</h3><span class="arrow">▼</span></div>
+        <div class="section-body">
+          <div class="form-row"><div class="form-group"><label>Box Size</label><select class="form-control" id="boxBoxSize" onchange="uGrid('GridLayoutInBox','boxSize',this.value,'str')"><option value="_8x8x8">_8x8x8</option><option value="_15x15x15">_15x15x15</option><option value="_20x10x7">_20x10x7</option><option value="_20x20x10">_20x20x10</option><option value="_20x20x20">_20x20x20</option><option value="_30x20x20">_30x20x20</option></select></div><div class="form-group"><label>Count</label><input type="number" class="form-control" id="boxProdCount" min="1" onchange="uGrid('GridLayoutInBox','productCount',this.value,'int')"></div></div>
+          <div class="form-group"><label>Scale</label><input type="number" class="form-control" id="boxScale" step="0.01" min="0" onchange="uGrid('GridLayoutInBox','scaleMultiplier',this.value,'float')"></div>
+          <div class="form-group"><label>First Position (X,Y,Z)</label><div class="form-row-3"><input type="number" class="form-control" id="boxPos0" step="0.001" onchange="uGridArr('GridLayoutInBox','firstObjectPosition','boxPos')"><input type="number" class="form-control" id="boxPos1" step="0.001" onchange="uGridArr('GridLayoutInBox','firstObjectPosition','boxPos')"><input type="number" class="form-control" id="boxPos2" step="0.001" onchange="uGridArr('GridLayoutInBox','firstObjectPosition','boxPos')"></div></div>
+          <div class="form-group"><label>Angles (X,Y,Z)</label><div class="form-row-3"><input type="number" class="form-control" id="boxAng0" step="0.01" onchange="uGridArr('GridLayoutInBox','productAngles','boxAng')"><input type="number" class="form-control" id="boxAng1" step="0.01" onchange="uGridArr('GridLayoutInBox','productAngles','boxAng')"><input type="number" class="form-control" id="boxAng2" step="0.01" onchange="uGridArr('GridLayoutInBox','productAngles','boxAng')"></div></div>
+          <div class="form-group"><label>Spacing (X,Y,Z)</label><div class="form-row-3"><input type="number" class="form-control" id="boxSpc0" step="0.001" onchange="uGridArr('GridLayoutInBox','spacing','boxSpc')"><input type="number" class="form-control" id="boxSpc1" step="0.001" onchange="uGridArr('GridLayoutInBox','spacing','boxSpc')"><input type="number" class="form-control" id="boxSpc2" step="0.001" onchange="uGridArr('GridLayoutInBox','spacing','boxSpc')"></div></div>
+          <div class="form-group"><label>Placement</label><div class="placement-row" id="boxPlacementRow"></div></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-head" onclick="toggleS(this)"><h3>🏬 Grid Layout In Storage</h3><span class="arrow">▼</span></div>
+        <div class="section-body">
+          <div class="form-row"><div class="form-group"><label>Box Size</label><select class="form-control" id="storBoxSize" onchange="uGrid('GridLayoutInStorage','boxSize',this.value,'str')"><option value="_8x8x8">_8x8x8</option><option value="_15x15x15">_15x15x15</option><option value="_20x10x7">_20x10x7</option><option value="_20x20x10">_20x20x10</option><option value="_20x20x20">_20x20x20</option><option value="_30x20x20">_30x20x20</option></select></div><div class="form-group"><label>Count</label><input type="number" class="form-control" id="storProdCount" min="1" onchange="uGrid('GridLayoutInStorage','productCount',this.value,'int')"></div></div>
+          <div class="form-group"><label>Scale</label><input type="number" class="form-control" id="storScale" step="0.01" min="0" onchange="uGrid('GridLayoutInStorage','scaleMultiplier',this.value,'float')"></div>
+          <div class="form-group"><label>First Position (X,Y,Z)</label><div class="form-row-3"><input type="number" class="form-control" id="storPos0" step="0.001" onchange="uGridArr('GridLayoutInStorage','firstObjectPosition','storPos')"><input type="number" class="form-control" id="storPos1" step="0.001" onchange="uGridArr('GridLayoutInStorage','firstObjectPosition','storPos')"><input type="number" class="form-control" id="storPos2" step="0.001" onchange="uGridArr('GridLayoutInStorage','firstObjectPosition','storPos')"></div></div>
+          <div class="form-group"><label>Angles (X,Y,Z)</label><div class="form-row-3"><input type="number" class="form-control" id="storAng0" step="0.01" onchange="uGridArr('GridLayoutInStorage','productAngles','storAng')"><input type="number" class="form-control" id="storAng1" step="0.01" onchange="uGridArr('GridLayoutInStorage','productAngles','storAng')"><input type="number" class="form-control" id="storAng2" step="0.01" onchange="uGridArr('GridLayoutInStorage','productAngles','storAng')"></div></div>
+          <div class="form-group"><label>Spacing (X,Y,Z)</label><div class="form-row-3"><input type="number" class="form-control" id="storSpc0" step="0.001" onchange="uGridArr('GridLayoutInStorage','spacing','storSpc')"><input type="number" class="form-control" id="storSpc1" step="0.001" onchange="uGridArr('GridLayoutInStorage','spacing','storSpc')"><input type="number" class="form-control" id="storSpc2" step="0.001" onchange="uGridArr('GridLayoutInStorage','spacing','storSpc')"></div></div>
+          <div class="form-group"><label>Placement</label><div class="placement-row" id="storPlacementRow"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <span class="dot" id="statusDot"></span>
+  <span id="statusLabel">Ready</span>
+  <span id="statusFile" style="color:var(--text-muted);"></span>
+  <span class="spacer"></span>
+  <span id="statusCount"></span>
+</div>
+
+<!-- IMPORT/EXPORT MODAL -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-box wide">
+    <h3>📋 Import / Export JSON</h3>
+    <p>Paste your <code>products.json</code> below, or view/copy current data.</p>
+    <textarea class="modal-ta" id="jsonInput" placeholder="Paste products.json content here…"></textarea>
+    <div class="error-msg" id="jsonError"></div>
+    <div class="modal-actions">
+      <button class="sb-btn" onclick="closeImportExport()">Close</button>
+      <button class="sb-btn" onclick="showRawJSON()">👁 Show Current</button>
+      <button class="sb-btn success" onclick="copyJSON()">📋 Copy</button>
+      <button class="sb-btn primary" onclick="loadJSONFromTextarea()">⚡ Load JSON</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <h3 id="confirmTitle">Confirm</h3>
+    <p id="confirmMsg">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="sb-btn" onclick="closeConfirm()">Cancel</button>
+      <button class="sb-btn danger" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG CONVERTER MODAL -->
+<div class="modal-overlay" id="converterModal">
+  <div class="modal-box converter">
+    <h3>📊 Config Converter — JSON ↔ Google Sheets (TSV)</h3>
+    <p>Convert between structured <code>products.json</code> and flat TSV for Google Sheets editing. Use "Show Current" to pre-fill from loaded data.</p>
+    <div class="conv-workspace">
+      <div class="conv-panel">
+        <div class="conv-panel-header">
+          <span class="conv-panel-title">Product_Config.JSON</span>
+          <div style="display:flex;gap:4px;">
+            <button class="sb-btn" onclick="convShowCurrent()">📄 Show Current</button>
+            <button class="sb-btn success" onclick="convCopy('convJsonBox')">📋 Copy</button>
+          </div>
+        </div>
+        <textarea id="convJsonBox" placeholder="Paste structured JSON here…"></textarea>
+      </div>
+      <div class="conv-center">
+        <button class="conv-toggle" id="convBtn" onclick="convRun()"><span id="convIcon">➔</span><br><span id="convText">To Sheets</span></button>
+        <button class="sb-btn" onclick="convSwitch()" style="width:100%;justify-content:center;">🔄 Switch</button>
+        <div class="conv-status" id="convStatus"></div>
+      </div>
+      <div class="conv-panel">
+        <div class="conv-panel-header">
+          <span class="conv-panel-title">Google Sheets Data (TSV)</span>
+          <button class="sb-btn success" onclick="convCopy('convTsvBox')">📋 Copy for Sheets</button>
+        </div>
+        <textarea id="convTsvBox" placeholder="Paste Google Sheets columns here…"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:8px;">
+      <button class="sb-btn" onclick="closeConverter()">Close</button>
+      <button class="sb-btn" onclick="convLoadJson()">⚡ Load JSON into Editor</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ==================== STATE ====================
+let data=null, currentLicenseIdx=0, currentProductIdx=0, fileHandle=null, convDirection='toTsv';
+
+// ==================== FILE API ====================
+async function openFile(){
+  if('showOpenFilePicker' in window){
+    try{const[h]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}],multiple:false});fileHandle=h;const f=await h.getFile();parseAndLoad(await f.text(),f.name);}catch(e){if(e.name!=='AbortError')toast('Error: '+e.message,'error');}
+  }else{document.getElementById('fileInput').click();}
+}
+function handleFileLoadFallback(e){const f=e.target.files[0];if(!f)return;fileHandle=null;const r=new FileReader();r.onload=ev=>parseAndLoad(ev.target.result,f.name);r.readAsText(f);e.target.value='';}
+function parseAndLoad(text,name){
+  try{const p=JSON.parse(text);if(!p.ProductLicenses||!Array.isArray(p.ProductLicenses)){toast('Invalid: missing ProductLicenses','error');return;}
+    data=p;currentLicenseIdx=0;currentProductIdx=0;activateEditor();renderCurrent();
+    document.getElementById('fileName').textContent=name;document.getElementById('fileInfo').style.display='block';
+    document.getElementById('statusFile').textContent=name;
+    document.getElementById('saveBtn').style.display=fileHandle?'block':'none';
+    toast('Loaded "'+name+'" — '+data.ProductLicenses.length+' licenses!','success');
+  }catch(e){toast('Parse Error: '+e.message,'error');}
+}
+async function saveFile(){if(!data){toast('No data!','error');return;}if(!fileHandle){toast('No file handle. Use Download.','warning');downloadJSON();return;}try{const w=await fileHandle.createWritable();await w.write(buildOutputJSON());await w.close();toast('Saved to file!','success');}catch(e){toast('Save error: '+e.message,'error');}}
+
+// ==================== IMPORT/EXPORT ====================
+function openImportExport(){document.getElementById('importModal').classList.add('visible');}
+function closeImportExport(){document.getElementById('importModal').classList.remove('visible');}
+function loadJSONFromTextarea(){const r=document.getElementById('jsonInput').value.trim();const e=document.getElementById('jsonError');if(!r){e.textContent='Paste JSON first.';e.classList.add('visible');return;}try{const p=JSON.parse(r);if(!p.ProductLicenses){e.textContent='Missing ProductLicenses';e.classList.add('visible');return;}data=p;currentLicenseIdx=0;currentProductIdx=0;e.classList.remove('visible');activateEditor();renderCurrent();closeImportExport();toast('Loaded!','success');}catch(err){e.textContent='Parse Error: '+err.message;e.classList.add('visible');}}
+function showRawJSON(){if(!data){toast('No data!','error');return;}document.getElementById('jsonInput').value=buildOutputJSON();toast('JSON shown','info');}
+
+function activateEditor(){
+  document.getElementById('splash').style.display='none';
+  document.getElementById('editorArea').classList.add('visible');
+  document.getElementById('toolbar').classList.add('visible');
+  document.getElementById('mainArea').classList.remove('no-toolbar');
+  document.getElementById('gridImportSection').style.display='block';
+  document.getElementById('gridDivider').style.display='block';
+  document.getElementById('converterSection').style.display='block';
+  document.getElementById('converterDivider').style.display='block';
+  document.getElementById('searchSection').style.display='block';
+  document.getElementById('statusDot').classList.add('active');
+  updateStatus();
+}
+
+// ==================== NAV ====================
+function goFirstLicense(){currentLicenseIdx=0;currentProductIdx=0;renderCurrent();}
+function goLastLicense(){currentLicenseIdx=data.ProductLicenses.length-1;currentProductIdx=0;renderCurrent();}
+function goPrevLicense(){if(currentLicenseIdx>0){currentLicenseIdx--;currentProductIdx=0;renderCurrent();}}
+function goNextLicense(){if(currentLicenseIdx<data.ProductLicenses.length-1){currentLicenseIdx++;currentProductIdx=0;renderCurrent();}}
+function goPrevProduct(){if(currentProductIdx>0){currentProductIdx--;renderCurrent();}else if(currentLicenseIdx>0){currentLicenseIdx--;currentProductIdx=gL().Products.length-1;renderCurrent();}}
+function goNextProduct(){if(currentProductIdx<gL().Products.length-1){currentProductIdx++;renderCurrent();}else if(currentLicenseIdx<data.ProductLicenses.length-1){currentLicenseIdx++;currentProductIdx=0;renderCurrent();}}
+function gL(){return data.ProductLicenses[currentLicenseIdx];}
+function gP(){return gL().Products[currentProductIdx];}
+
+// ==================== RENDER ====================
+function renderCurrent(){
+  if(!data||data.ProductLicenses.length===0)return;const l=gL(),p=gP();
+  document.getElementById('tbLicCounter').textContent='License '+(currentLicenseIdx+1)+' / '+data.ProductLicenses.length;
+  document.getElementById('tbProdCounter').textContent='Product '+(currentProductIdx+1)+' / '+l.Products.length;
+  _v('licId',l.ID);_v('licName',l.LicenseName);_v('licLevel',l.RequiredPlayerLevel);_v('licCost',l.PurchasingCost);
+  _v('prodId',p.ID);_v('prodName',p.ProductName);_v('prodNameRatio',p.ProductNameSizeRatio);_v('prodBrand',p.ProductBrand);
+  _v('prodIcon',p.ProductIcon);_v('prodBoxIcon',p.BoxIcon);_v('prodDisplayType',p.ProductDisplayType);_v('prodCategory',p.Category);
+  _v('prefabObj',p.ProductPrefab.objPath);_v('prefabMtl',p.ProductPrefab.mtlPath);
+  _v('prodAmount',p.ProductAmountOnPurchase);_v('prodBasePrice',p.BasePrice);_v('prodMinPrice',p.MinDynamicPrice);_v('prodMaxPrice',p.MaxDynamicPrice);
+  _v('prodOptProfit',p.OptimumProfitRate);_v('prodMaxProfit',p.MaxProfitRate);_v('gridSizeW',p.ItemGridSize[0]);_v('gridSizeH',p.ItemGridSize[1]);
+  _v('prodLabelIcon',p.LabelIcon||'');
+  document.getElementById('optCanPlaceVending').checked=!!p.CanPlaceVending;
+  document.getElementById('optIsBakery').checked=!!p.IsBakeryProduct;
+  document.getElementById('optCanNotRotate').checked=!!p.CanNOTRotate;
+  _v('optCustomCat',p.CustomCategory||'');_v('optPlaceSpeed',p.PlacementSpeedMultiplier!=null?p.PlacementSpeedMultiplier:'');
+  _v('optNameColor',p.ProductNameColor||'');try{document.getElementById('optNameColorPick').value=(p.ProductNameColor||'#e6edf3').substring(0,7);}catch(e){}
+  _v('optVendSlot',p.MaxVendingSlotCount!=null?p.MaxVendingSlotCount:'');_v('optVendCol',p.MaxVendingColumnCount!=null?p.MaxVendingColumnCount:'');
+  _v('optVendScale',p.VendingScaleMultiplier!=null?p.VendingScaleMultiplier:'');
+  _setVec3('optVendRot',p.VendingRotationEuler);_setVec3('optCrate',p.ItemGridSizeInCrate);
+  _setVec3('optHand',p.HandOffset);_setVec3('optHandRot',p.HandRotationOffset);
+  _setVec3('optPrefPos',p.prefabLocalPosition);_setVec3('optPrefRot',p.prefabLocalRotation);_setVec3('optPrefScl',p.prefabLocalScale);
+  _v('optBoxObj',p.boxObjPath||'');_v('optBoxMtl',p.boxMtlPath||'');
+  _setVec3('optBoxPos',p.boxLocalPosition);_setVec3('optBoxRot',p.boxLocalRotation);_setVec3('optBoxScl',p.boxLocalScale);
+  renderGL('box',p.GridLayoutInBox);renderGL('stor',p.GridLayoutInStorage);updateStatus();
+}
+function _v(id,val){document.getElementById(id).value=val;}
+function _setVec3(prefix,arr){if(arr&&Array.isArray(arr)){for(let i=0;i<3;i++)_v(prefix+i,arr[i]!=null?arr[i]:'');}else{for(let i=0;i<3;i++)_v(prefix+i,'');}}
+function renderGL(pre,g){_v(pre+'BoxSize',g.boxSize);_v(pre+'ProdCount',g.productCount);_v(pre+'Scale',g.scaleMultiplier);for(let i=0;i<3;i++){_v(pre+'Pos'+i,g.firstObjectPosition[i]);_v(pre+'Ang'+i,g.productAngles[i]);_v(pre+'Spc'+i,g.spacing[i]);}renderPlacement(document.getElementById(pre+'PlacementRow'),pre,g.productPlacement);}
+function renderPlacement(c,pre,arr){c.innerHTML='';const gk=pre==='box'?'GridLayoutInBox':'GridLayoutInStorage';arr.forEach((v,i)=>{const inp=document.createElement('input');inp.type='number';inp.className='form-control';inp.value=v;inp.id=pre+'Plc'+i;inp.min='0';inp.onchange=()=>uPlacement(gk,pre);c.appendChild(inp);});const ab=document.createElement('button');ab.className='p-btn';ab.textContent='+';ab.onclick=()=>{gP()[gk].productPlacement.push(0);renderPlacement(c,pre,gP()[gk].productPlacement);};c.appendChild(ab);if(arr.length>2){const rb=document.createElement('button');rb.className='p-btn rm';rb.textContent='−';rb.onclick=()=>{gP()[gk].productPlacement.pop();renderPlacement(c,pre,gP()[gk].productPlacement);};c.appendChild(rb);}}
+
+// ==================== DATA UPDATES ====================
+function pv(v,t){if(t==='int')return parseInt(v,10)||0;if(t==='float')return parseFloat(v)||0;return v;}
+function uLic(f,v,t){gL()[f]=pv(v,t);}
+function uProd(f,v,t){gP()[f]=pv(v,t);}
+function uProdOpt(f,v,t){const p=gP();if(v===undefined||v===''||v===null){delete p[f];return;}if(t==='raw')p[f]=v;else if(t==='toggle')p[f]=v;else p[f]=pv(v,t);}
+function uOptVec3(field,prefix){const vals=[];let any=false;for(let i=0;i<3;i++){const v=document.getElementById(prefix+i).value;if(v!==''){vals.push(parseFloat(v)||0);any=true;}else vals.push(0);}if(any)gP()[field]=vals;else delete gP()[field];}
+function uPrefab(f,v){gP().ProductPrefab[f]=v;}
+function uItemGridSize(){gP().ItemGridSize=[parseInt(document.getElementById('gridSizeW').value,10)||1,parseInt(document.getElementById('gridSizeH').value,10)||1];}
+function uGrid(gk,f,v,t){gP()[gk][f]=pv(v,t);}
+function uGridArr(gk,f,pre){const a=[];for(let i=0;i<3;i++)a.push(parseFloat(document.getElementById(pre+i).value)||0);gP()[gk][f]=a;}
+function uPlacement(gk,pre){const a=gP()[gk].productPlacement;for(let i=0;i<a.length;i++){const el=document.getElementById(pre+'Plc'+i);if(el)a[i]=parseInt(el.value,10)||0;}}
+
+// ==================== SEARCH ====================
+function doSearch(){if(!data)return;const sLI=document.getElementById('searchLicenseId').value.trim(),sPI=document.getElementById('searchProductId').value.trim();const sLN=document.getElementById('searchLicenseName').value.trim().toLowerCase(),sPN=document.getElementById('searchProductName').value.trim().toLowerCase();for(let li=0;li<data.ProductLicenses.length;li++){const lic=data.ProductLicenses[li];if(sLI&&lic.ID===parseInt(sLI,10)){currentLicenseIdx=li;currentProductIdx=0;if(sPI||sPN)for(let pi=0;pi<lic.Products.length;pi++){if(sPI&&lic.Products[pi].ID===parseInt(sPI,10)){currentProductIdx=pi;break;}if(sPN&&lic.Products[pi].ProductName.toLowerCase().includes(sPN)){currentProductIdx=pi;break;}}renderCurrent();toast('Found license '+lic.ID,'info');return;}if(sLN&&lic.LicenseName.toLowerCase().includes(sLN)){currentLicenseIdx=li;currentProductIdx=0;renderCurrent();toast('Found: '+lic.LicenseName,'info');return;}if(sPI||sPN)for(let pi=0;pi<lic.Products.length;pi++){const p=lic.Products[pi];if(sPI&&p.ID===parseInt(sPI,10)){currentLicenseIdx=li;currentProductIdx=pi;renderCurrent();toast('Found product '+p.ID,'info');return;}if(sPN&&p.ProductName.toLowerCase().includes(sPN)){currentLicenseIdx=li;currentProductIdx=pi;renderCurrent();toast('Found: '+p.ProductName,'info');return;}}}toast('Not found.','warning');}
+
+// ==================== ADD / DELETE ====================
+function maxLicId(){let m=0;data.ProductLicenses.forEach(l=>{if(l.ID>m)m=l.ID;});return m;}
+function maxProdId(){let m=0;data.ProductLicenses.forEach(l=>l.Products.forEach(p=>{if(p.ID>m)m=p.ID;}));return m;}
+function mkProd(id){return{ID:id,ProductName:"New Product",ProductNameSizeRatio:0.8,ProductBrand:"Brand",ProductIcon:"products_icons/new.png",BoxIcon:"products_icons/new.png",ProductDisplayType:"SHELF",Category:"EDIBLE",ProductPrefab:{objPath:"objects_meshes/new.obj",mtlPath:"objects_meshes/new.mtl"},ProductAmountOnPurchase:12,BasePrice:1,MinDynamicPrice:0.8,MaxDynamicPrice:5,OptimumProfitRate:150,MaxProfitRate:300,GridLayoutInBox:{boxSize:"_20x10x7",productCount:12,firstObjectPosition:[0,0,0],productAngles:[0,0,0],spacing:[0.1,0,0.1],productPlacement:[3,4],scaleMultiplier:1},GridLayoutInStorage:{boxSize:"_8x8x8",productCount:12,firstObjectPosition:[0,0,0],productAngles:[0,0,0],spacing:[0.1,0,0.1],productPlacement:[3,4],scaleMultiplier:1},ItemGridSize:[1,1]};}
+function addNewLicense(){if(!data)return;const nid=maxLicId()+1,npid=maxProdId()+1;data.ProductLicenses.push({ID:nid,LicenseName:"New License",RequiredPlayerLevel:1,PurchasingCost:100,Products:[mkProd(npid)]});currentLicenseIdx=data.ProductLicenses.length-1;currentProductIdx=0;renderCurrent();toast('New license ('+nid+')','success');}
+function addNewProduct(){if(!data)return;const nid=maxProdId()+1;const t=JSON.parse(JSON.stringify(gP()));t.ID=nid;t.ProductName="New Product";gL().Products.push(t);currentProductIdx=gL().Products.length-1;renderCurrent();toast('New product ('+nid+')','success');}
+function duplicateProduct(){if(!data)return;const nid=maxProdId()+1;const c=JSON.parse(JSON.stringify(gP()));c.ID=nid;c.ProductName+=' (Copy)';gL().Products.splice(currentProductIdx+1,0,c);currentProductIdx++;renderCurrent();toast('Duplicated ('+nid+')','success');}
+function confirmDeleteProduct(){if(!data)return;const p=gP(),l=gL();if(l.Products.length<=1)showConfirm('Delete License?','Last product in "'+l.LicenseName+'". Removes entire license.',()=>deleteLicense());else showConfirm('Delete Product?','Delete "'+p.ProductName+'" ('+p.ID+')?',()=>deleteProduct());}
+function confirmDeleteLicense(){if(!data)return;showConfirm('Delete License?','Delete "'+gL().LicenseName+'" and all '+gL().Products.length+' product(s)?',()=>deleteLicense());}
+function deleteProduct(){const n=gL().Products[currentProductIdx].ProductName;gL().Products.splice(currentProductIdx,1);if(currentProductIdx>=gL().Products.length)currentProductIdx--;renderCurrent();toast('Deleted "'+n+'"','info');}
+function deleteLicense(){const n=data.ProductLicenses[currentLicenseIdx].LicenseName;data.ProductLicenses.splice(currentLicenseIdx,1);if(data.ProductLicenses.length===0){document.getElementById('editorArea').classList.remove('visible');document.getElementById('toolbar').classList.remove('visible');document.getElementById('mainArea').classList.add('no-toolbar');document.getElementById('splash').style.display='flex';document.getElementById('statusDot').classList.remove('active');toast('All deleted.','warning');updateStatus();return;}if(currentLicenseIdx>=data.ProductLicenses.length)currentLicenseIdx--;currentProductIdx=0;renderCurrent();toast('Deleted "'+n+'"','info');}
+
+// ==================== JSON OUTPUT ====================
+function buildOutputJSON(){
+  if(!data)return'';const o={};if(data.$schema)o.$schema=data.$schema;
+  o.ProductLicenses=data.ProductLicenses.map(lic=>{const l={ID:lic.ID,LicenseName:lic.LicenseName,RequiredPlayerLevel:lic.RequiredPlayerLevel,PurchasingCost:lic.PurchasingCost};l.Products=lic.Products.map(prod=>{const p={};p.ID=prod.ID;p.ProductName=prod.ProductName;p.ProductNameSizeRatio=prod.ProductNameSizeRatio;p.ProductBrand=prod.ProductBrand;p.ProductIcon=prod.ProductIcon;p.BoxIcon=prod.BoxIcon;if(prod.LabelIcon)p.LabelIcon=prod.LabelIcon;p.ProductDisplayType=prod.ProductDisplayType;p.Category=prod.Category;if(prod.CustomCategory)p.CustomCategory=prod.CustomCategory;p.ProductPrefab={objPath:prod.ProductPrefab.objPath,mtlPath:prod.ProductPrefab.mtlPath};p.ProductAmountOnPurchase=prod.ProductAmountOnPurchase;p.BasePrice=prod.BasePrice;p.MinDynamicPrice=prod.MinDynamicPrice;p.MaxDynamicPrice=prod.MaxDynamicPrice;p.OptimumProfitRate=prod.OptimumProfitRate;p.MaxProfitRate=prod.MaxProfitRate;
+    if(prod.CanPlaceVending)p.CanPlaceVending=prod.CanPlaceVending;if(prod.IsBakeryProduct)p.IsBakeryProduct=prod.IsBakeryProduct;if(prod.CanNOTRotate)p.CanNOTRotate=prod.CanNOTRotate;if(prod.PlacementSpeedMultiplier!=null)p.PlacementSpeedMultiplier=prod.PlacementSpeedMultiplier;if(prod.ProductNameColor)p.ProductNameColor=prod.ProductNameColor;
+    if(prod.MaxVendingSlotCount!=null)p.MaxVendingSlotCount=prod.MaxVendingSlotCount;if(prod.MaxVendingColumnCount!=null)p.MaxVendingColumnCount=prod.MaxVendingColumnCount;if(prod.VendingScaleMultiplier!=null)p.VendingScaleMultiplier=prod.VendingScaleMultiplier;if(prod.VendingRotationEuler)p.VendingRotationEuler=[...prod.VendingRotationEuler];
+    if(prod.ItemGridSizeInCrate)p.ItemGridSizeInCrate=[...prod.ItemGridSizeInCrate];if(prod.HandOffset)p.HandOffset=[...prod.HandOffset];if(prod.HandRotationOffset)p.HandRotationOffset=[...prod.HandRotationOffset];
+    if(prod.prefabLocalPosition)p.prefabLocalPosition=[...prod.prefabLocalPosition];if(prod.prefabLocalRotation)p.prefabLocalRotation=[...prod.prefabLocalRotation];if(prod.prefabLocalScale)p.prefabLocalScale=[...prod.prefabLocalScale];
+    if(prod.boxObjPath)p.boxObjPath=prod.boxObjPath;if(prod.boxMtlPath)p.boxMtlPath=prod.boxMtlPath;if(prod.boxLocalPosition)p.boxLocalPosition=[...prod.boxLocalPosition];if(prod.boxLocalRotation)p.boxLocalRotation=[...prod.boxLocalRotation];if(prod.boxLocalScale)p.boxLocalScale=[...prod.boxLocalScale];
+    p.GridLayoutInBox=copyGrid(prod.GridLayoutInBox);p.GridLayoutInStorage=copyGrid(prod.GridLayoutInStorage);p.ItemGridSize=[...prod.ItemGridSize];return p;});return l;});
+  let json=JSON.stringify(o,null,2);
+  json=json.replace(/\[\s*\n\s*(-?[\d.]+),\s*\n\s*(-?[\d.]+),\s*\n\s*(-?[\d.]+),\s*\n\s*(-?[\d.]+)\s*\n\s*\]/g,'[$1, $2, $3, $4]');
+  json=json.replace(/\[\s*\n\s*(-?[\d.]+),\s*\n\s*(-?[\d.]+),\s*\n\s*(-?[\d.]+)\s*\n\s*\]/g,'[$1, $2, $3]');
+  json=json.replace(/\[\s*\n\s*(-?[\d.]+),\s*\n\s*(-?[\d.]+)\s*\n\s*\]/g,'[$1, $2]');
+  return json;
+}
+function copyGrid(g){return{boxSize:g.boxSize,productCount:g.productCount,firstObjectPosition:[...g.firstObjectPosition],productAngles:[...g.productAngles],spacing:[...g.spacing],productPlacement:[...g.productPlacement],scaleMultiplier:g.scaleMultiplier};}
+function copyJSON(){if(!data){toast('No data!','error');return;}navigator.clipboard.writeText(buildOutputJSON()).then(()=>toast('Copied!','success')).catch(()=>{openImportExport();document.getElementById('jsonInput').value=buildOutputJSON();toast('Shown in textarea','warning');});}
+function downloadJSON(){if(!data){toast('No data!','error');return;}const b=new Blob([buildOutputJSON()],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='products.json';a.click();URL.revokeObjectURL(u);toast('Downloaded!','success');}
+
+// ==================== GRID IMPORT (CustomProductGrids) ====================
+async function openGridFile(){if(!data){toast('Load products.json first!','error');return;}if('showOpenFilePicker' in window){try{const[h]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}],multiple:false});const f=await h.getFile();mergeGridData(await f.text(),f.name);}catch(e){if(e.name!=='AbortError')toast('Error: '+e.message,'error');}}else{document.getElementById('gridFileInput').click();}}
+function handleGridFileLoad(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>mergeGridData(ev.target.result,f.name);r.readAsText(f);e.target.value='';}
+function mergeGridData(text,fileName){let gd;try{gd=JSON.parse(text);}catch(e){toast('Grid parse error: '+e.message,'error');return;}if(!gd.Data||!Array.isArray(gd.Data)){toast('Invalid: missing "Data" array.','error');return;}const pm=new Map();data.ProductLicenses.forEach(l=>l.Products.forEach(p=>pm.set(p.ID,p)));let matched=0,skipped=0;gd.Data.forEach(g=>{const id=g['Product ID'];const prod=pm.get(id);if(!prod){skipped++;return;}const stor=prod.GridLayoutInStorage;if(g['Product start pos (x,y,z)'])stor.firstObjectPosition=[...g['Product start pos (x,y,z)']];if(g['Product rotation (x,y,z)'])stor.productAngles=[...g['Product rotation (x,y,z)']];if(g['Product placement grid (x,y,z)'])stor.productPlacement=[...g['Product placement grid (x,y,z)']];if(g['Product spacing (x,y,z)'])stor.spacing=[...g['Product spacing (x,y,z)']];if(g['Product count']!=null)stor.productCount=g['Product count'];if(g['Product scale']!=null)stor.scaleMultiplier=g['Product scale'];const box=g['Box layout'];if(box){const bx=prod.GridLayoutInBox;if(box['Box Size'])bx.boxSize=box['Box Size'];if(box['Product start pos (x,y,z)'])bx.firstObjectPosition=[...box['Product start pos (x,y,z)']];if(box['Product rotation (x,y,z)'])bx.productAngles=[...box['Product rotation (x,y,z)']];if(box['Product placement grid (x,y,z)'])bx.productPlacement=[...box['Product placement grid (x,y,z)']];if(box['Product spacing (x,y,z)'])bx.spacing=[...box['Product spacing (x,y,z)']];if(box['Product count']!=null)bx.productCount=box['Product count'];if(box['Product scale']!=null)bx.scaleMultiplier=box['Product scale'];}matched++;});document.getElementById('gridFileName').textContent=fileName;document.getElementById('gridFileInfo').style.display='block';renderCurrent();toast(`Grid import: ${matched} matched, ${skipped} skipped`,(matched>0?'success':'warning'));}
+
+// ==================== CONFIG CONVERTER ====================
+function openConverter(){document.getElementById('converterModal').classList.add('visible');}
+function closeConverter(){document.getElementById('converterModal').classList.remove('visible');}
+function convShowCurrent(){if(!data){toast('No data!','error');return;}document.getElementById('convJsonBox').value=buildOutputJSON();convSetStatus('Loaded current data','ok');}
+function convCopy(id){const a=document.getElementById(id);navigator.clipboard.writeText(a.value).then(()=>convSetStatus('Copied!','ok')).catch(()=>convSetStatus('Copy failed','err'));}
+function convSwitch(){convDirection=convDirection==='toTsv'?'toJson':'toTsv';document.getElementById('convIcon').textContent=convDirection==='toTsv'?'➔':'⬅';document.getElementById('convText').textContent=convDirection==='toTsv'?'To Sheets':'To JSON';}
+function convSetStatus(msg,cls){const el=document.getElementById('convStatus');el.textContent=msg;el.className='conv-status '+(cls||'');}
+function convRun(){convSetStatus('','');try{if(convDirection==='toTsv'){convJsonToTsv();convSetStatus('✅ Converted to Sheets!','ok');}else{convTsvToJson();convSetStatus('✅ Converted to JSON!','ok');}}catch(e){convSetStatus('❌ '+e.message,'err');}}
+function convLoadJson(){const t=document.getElementById('convJsonBox').value.trim();if(!t){toast('JSON box empty','error');return;}try{const p=JSON.parse(t);if(!p.ProductLicenses){toast('Missing ProductLicenses','error');return;}data=p;currentLicenseIdx=0;currentProductIdx=0;activateEditor();renderCurrent();closeConverter();toast('Loaded from converter!','success');}catch(e){toast('Parse error: '+e.message,'error');}}
+function convJsonToTsv(){const s=document.getElementById('convJsonBox').value.trim();if(!s)throw new Error('JSON box is empty.');const d=JSON.parse(s);let lics=d.ProductLicenses;if(!lics||!Array.isArray(lics))lics=[d];let rows=[];lics.forEach(lic=>{if(lic.Products&&Array.isArray(lic.Products)){lic.Products.forEach(prod=>{let f={LicenseID:lic.ID,LicenseName:lic.LicenseName,RequiredPlayerLevel:lic.RequiredPlayerLevel,PurchasingCost:lic.PurchasingCost};Object.assign(f,flattenObj(prod));rows.push(f);});}});if(!rows.length)throw new Error('No products found.');const hdrs=Array.from(new Set(rows.flatMap(r=>Object.keys(r))));let lines=[hdrs.join('\t')];rows.forEach(r=>{lines.push(hdrs.map(h=>{let v=r[h];if(v===undefined||v===null)return'';if(Array.isArray(v))return v.join(', ');return String(v).replace(/[\t\r\n]+/g,' ');}).join('\t'));});document.getElementById('convTsvBox').value=lines.join('\n');}
+function convTsvToJson(){const s=document.getElementById('convTsvBox').value.trim();if(!s)throw new Error('TSV box is empty.');const lines=s.split(/\r?\n/);if(lines.length<2)throw new Error('Need headers + data.');const hdrs=lines[0].split('\t');const lm=new Map();for(let i=1;i<lines.length;i++){const rd=lines[i].split('\t');if(rd.length===1&&rd[0]==='')continue;let raw={};hdrs.forEach((h,idx)=>{raw[h]=parsePrim(rd[idx]);});const lid=raw.LicenseID||100100;if(!lm.has(lid))lm.set(lid,{ID:lid,LicenseName:raw.LicenseName||'License',RequiredPlayerLevel:raw.RequiredPlayerLevel!==undefined?raw.RequiredPlayerLevel:1,PurchasingCost:raw.PurchasingCost!==undefined?raw.PurchasingCost:0,Products:[]});let po={};Object.keys(raw).forEach(k=>{if(['LicenseID','LicenseName','RequiredPlayerLevel','PurchasingCost'].includes(k))return;unflatProp(po,k,raw[k]);});lm.get(lid).Products.push(po);}const fin={"$schema":"../schemas/product_config.json",ProductLicenses:Array.from(lm.values())};let j=JSON.stringify(fin,null,2);j=j.replace(/\[\s+(-?[\d.,\s]+?)\s+\]/g,(m,c)=>{const col=c.split(/\s*,\s*|\n/).map(s=>s.trim()).filter(Boolean).join(', ');return'['+col+']';});document.getElementById('convJsonBox').value=j;}
+function flattenObj(obj,prefix=''){let f={};for(let k in obj){if(!obj.hasOwnProperty(k))continue;let pn=prefix?prefix+'.'+k:k;if(typeof obj[k]==='object'&&obj[k]!==null&&!Array.isArray(obj[k]))Object.assign(f,flattenObj(obj[k],pn));else f[pn]=obj[k];}return f;}
+function unflatProp(obj,path,val){if(val===''||val===undefined)return;const parts=path.split('.');let cur=obj;for(let i=0;i<parts.length-1;i++){if(!cur[parts[i]])cur[parts[i]]={};cur=cur[parts[i]];}cur[parts[parts.length-1]]=val;}
+function parsePrim(val){if(val===undefined||val===null)return'';val=String(val).trim();if(val==='')return'';if(val.startsWith('[')&&val.endsWith(']')){try{return JSON.parse(val);}catch(e){return val.substring(1,val.length-1).split(',').map(i=>parsePrim(i));}}if(val.includes(',')){const parts=val.split(',');if(parts.every(p=>!isNaN(p.trim())&&p.trim()!==''))return parts.map(p=>Number(p.trim()));}if(!isNaN(val)&&val!=='')return Number(val);if(val.toLowerCase()==='true')return true;if(val.toLowerCase()==='false')return false;return val;}
+
+// ==================== UI HELPERS ====================
+function toggleS(el){el.classList.toggle('open');el.nextElementSibling.classList.toggle('open');}
+function showConfirm(t,m,fn){document.getElementById('confirmTitle').textContent=t;document.getElementById('confirmMsg').textContent=m;document.getElementById('confirmOk').onclick=()=>{closeConfirm();fn();};document.getElementById('confirmModal').classList.add('visible');}
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('visible');}
+function toast(m,t='info'){const c=document.getElementById('toastContainer');const e=document.createElement('div');e.className='toast '+t;e.textContent=m;c.appendChild(e);setTimeout(()=>{if(e.parentNode)e.remove();},3200);}
+function updateStatus(){if(!data||!data.ProductLicenses){document.getElementById('statusLabel').textContent='No data';document.getElementById('statusCount').textContent='';return;}document.getElementById('statusLabel').textContent='Active';let t=0;data.ProductLicenses.forEach(l=>t+=l.Products.length);document.getElementById('statusCount').textContent=data.ProductLicenses.length+'L · '+t+'P';}
+
+// KEYBOARD
+document.addEventListener('keydown',e=>{const tag=e.target.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'){if(e.ctrlKey&&e.key==='s'){e.preventDefault();fileHandle?saveFile():copyJSON();}return;}
+  if(!data)return;
+  if(e.ctrlKey&&e.key==='s'){e.preventDefault();fileHandle?saveFile():copyJSON();}
+  else if(e.ctrlKey&&e.key==='ArrowLeft'){e.preventDefault();goPrevLicense();}
+  else if(e.ctrlKey&&e.key==='ArrowRight'){e.preventDefault();goNextLicense();}
+  else if(e.key==='ArrowLeft')goPrevProduct();
+  else if(e.key==='ArrowRight')goNextProduct();
+});
+</script>
+</body>
+</html>
