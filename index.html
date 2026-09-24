@@ -233,7 +233,7 @@
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-header">
-    <h1>🛒 Product License Editor <span style="font-size:11px;font-weight:400;opacity:0.7;">v2.0.0</span></h1>
+    <h1>🛒 Product License Editor <span style="font-size:11px;font-weight:400;opacity:0.7;">v2.1.0</span></h1>
     <div class="sub">Supermarket Simulator · CPL 2.1.2</div> 
     <div class="subsub">By: <a href="http://twitch.tv/thawiznator" target="_blank">ThaWizanator</a></div>
   </div>
@@ -658,7 +658,15 @@
     </div>
     <div class="settings-group">
       <h4>General</h4>
-      <p class="settings-placeholder">More options coming soon.</p>
+      <div class="toggle-row" style="margin-bottom:10px;">
+        <label class="toggle"><input type="checkbox" id="settingToasts" onchange="appSettings.toastsEnabled=this.checked;saveSettings()"><span class="slider"></span></label>
+        <label for="settingToasts" style="cursor:pointer;">Show toast notifications</label>
+      </div>
+      <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;">Undo / Redo History Steps <span style="color:var(--text-muted);font-size:10px;">(max&nbsp;200)</span></label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="number" id="settingUndoLimit" min="1" max="200" style="width:72px;padding:4px 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;" onchange="appSettings.undoLimit=Math.min(200,Math.max(1,parseInt(this.value)||50));this.value=appSettings.undoLimit;saveSettings()">
+        <span style="font-size:10px;color:var(--text-muted);">Current stack: <span id="settingUndoCurrent">0</span> saved</span>
+      </div>
     </div>
     <div class="settings-group">
       <h4>Editor Behavior</h4>
@@ -670,7 +678,16 @@
     </div>
     <div class="settings-group">
       <h4>3D Positioning Tool</h4>
-      <p class="settings-placeholder">More options coming soon.</p>
+      <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;">Slider Increment (Step Size)</label>
+      <select id="settingVizStep" style="width:100%;padding:4px 6px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;" onchange="appSettings.vizSliderStep=parseFloat(this.value);applyVizSliderStep();saveSettings()">
+        <option value="0.001">0.001 — Ultra fine</option>
+        <option value="0.005">0.005 — Very fine</option>
+        <option value="0.01">0.01 — Fine</option>
+        <option value="0.025">0.025 — Quarter step</option>
+        <option value="0.05" selected>0.05 — Default</option>
+        <option value="0.1">0.1 — Coarse</option>
+      </select>
+      <p style="font-size:9px;color:var(--text-muted);margin-top:4px;">Controls how much anchor, spacing, and scale sliders move per tick in the 3D visualizer.</p>
     </div>
   </div>
   <div class="settings-drawer-footer">
@@ -694,8 +711,33 @@
       <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">By <a href="http://twitch.tv/thawiznator" target="_blank" style="color:var(--accent);">ThaWizanator</a> · No install required · Runs 100% locally</p>
     </div>
     <div class="settings-group">
+      <h4>🔗 Mod Links</h4>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <a href="https://www.nexusmods.com/supermarketsimulator/mods/1589" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:14px;">📦</span> Custom Products Loader (CPL) — NexusMods
+        </a>
+        <a href="https://www.nexusmods.com/supermarketsimulator/mods/1297" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:14px;">📐</span> Custom Product Placement (CPP) — NexusMods
+        </a>
+        <a href="https://github.com/thawizanator/cpl-product-editor" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:14px;">🐙</span> CPL Product Editor — GitHub
+        </a>
+      </div>
+    </div>
+    <div class="settings-group">
       <h4>📋 Changelog</h4>
       <div style="font-size:11px;color:var(--text-secondary);line-height:1.7;">
+        <div style="color:var(--accent);font-weight:700;margin-bottom:4px;">v2.1.0 — 2026-09-23</div>
+        <ul style="padding-left:16px;margin-bottom:12px;">
+          <li>Error handler: unhandled JS errors &amp; promise rejections open a pre-filled GitHub issue link</li>
+          <li>Settings → Slider Increment: choose step size (0.001–0.1) for 3D visualizer sliders</li>
+          <li>About drawer: added NexusMods links for CPL and CPP mods, and GitHub repo link</li>
+          <li>Close File now fully resets sidebar (Search and Grid Import sections hidden)</li>
+          <li>Viz label precision: typed values display exactly as entered, not rounded to step</li>
+          <li>Double-click a viz slider resets it to its default value</li>
+          <li>Settings → Toast notifications toggle (status bar always shows messages)</li>
+          <li>Settings → Configurable Undo/Redo history depth (1–200, default 50)</li>
+        </ul>
         <div style="color:var(--accent);font-weight:700;margin-bottom:4px;">v2.0.0 — 2026-09-15</div>
         <ul style="padding-left:16px;margin-bottom:12px;">
           <li>Fixed 3D visualizer stale-data bug (removed isZero heuristic — sliders always sync)</li>
@@ -807,23 +849,31 @@
 <script>
 // ==================== STATE ====================
 let data=null, currentLicenseIdx=0, currentProductIdx=0, fileHandle=null, convDirection='toTsv';
-let undoStack=[], redoStack=[]; const UNDO_LIMIT=50;
+let undoStack=[], redoStack=[];
 let assetsRootHandle=null, loadedJsonBaseName=null;
 
 // ==================== SETTINGS ====================
-// Empty for now — this is just the container/UI shell. Real options get added here later
-// and picked up automatically by the drawer's render/save/reset flow below.
-const DEFAULT_SETTINGS={};
+const UNDO_MAX=200;
+const DEFAULT_SETTINGS={toastsEnabled:true,undoLimit:50,vizSliderStep:0.05};
 let appSettings={...DEFAULT_SETTINGS};
 function loadSettings(){
   try{
     const raw=localStorage.getItem('cpl_editor_settings');
     appSettings=raw?Object.assign({},DEFAULT_SETTINGS,JSON.parse(raw)):{...DEFAULT_SETTINGS};
+    appSettings.undoLimit=Math.min(UNDO_MAX,Math.max(1,parseInt(appSettings.undoLimit)||50));
   }catch(e){appSettings={...DEFAULT_SETTINGS};}
 }
 function openSettings(){
   document.getElementById('settingsDrawer').classList.add('open');
   document.getElementById('settingsBackdrop').classList.add('visible');
+  const toastEl=document.getElementById('settingToasts');
+  if(toastEl)toastEl.checked=appSettings.toastsEnabled!==false;
+  const undoEl=document.getElementById('settingUndoLimit');
+  if(undoEl)undoEl.value=appSettings.undoLimit||50;
+  const curEl=document.getElementById('settingUndoCurrent');
+  if(curEl)curEl.textContent=undoStack.length;
+  const stepEl=document.getElementById('settingVizStep');
+  if(stepEl)stepEl.value=String(appSettings.vizSliderStep||0.05);
 }
 function closeSettings(){
   document.getElementById('settingsDrawer').classList.remove('open');
@@ -855,10 +905,21 @@ function resetSettingsToDefault(){
   showConfirm('Reset Settings?','This resets all settings back to their defaults. This cannot be undone.',()=>{
     appSettings={...DEFAULT_SETTINGS};
     saveSettings();
-    toast('Settings reset to default.','info');
+    const toastEl=document.getElementById('settingToasts');if(toastEl)toastEl.checked=true;
+    const undoEl=document.getElementById('settingUndoLimit');if(undoEl)undoEl.value=DEFAULT_SETTINGS.undoLimit;
+    const stepEl=document.getElementById('settingVizStep');if(stepEl)stepEl.value=String(DEFAULT_SETTINGS.vizSliderStep);
+    applyVizSliderStep();
   },{confirmLabel:'Reset to Default'});
 }
+function applyVizSliderStep(){
+  const step=appSettings.vizSliderStep||0.05;
+  // Apply to anchor, spacing, and scale sliders (not box dims / origin — those have fixed logical ranges)
+  ['vizAX','vizAY','vizAZ','vizSX','vizSY','vizSZ','vizScale'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.step=step;
+  });
+}
 loadSettings();
+applyVizSliderStep(); // apply persisted step on page load
 
 // ==================== FOLDER RESOLUTION HELPERS ====================
 // Browsers won't let a file handle walk "up" to its parent folder (security),
@@ -1008,6 +1069,9 @@ function closeFile(){
     document.getElementById('linkFileBtn').style.display='none';
     document.getElementById('closeBtn').style.display='none';
     document.getElementById('copyDownloadRow').style.display='none';
+    document.getElementById('searchSection').style.display='none';
+    document.getElementById('gridImportSection').style.display='none';
+    document.getElementById('gridDivider').style.display='none';
   },{
     confirmLabel:'Close Without Saving',
     saveLabel:'💾 Save & Close',
@@ -1350,7 +1414,7 @@ function showConfirm(t,m,fn,opts){
   document.getElementById('confirmModal').classList.add('visible');
 }
 function closeConfirm(){document.getElementById('confirmModal').classList.remove('visible');}
-function toast(m,t='info'){const c=document.getElementById('toastContainer');const e=document.createElement('div');e.className='toast '+t;e.textContent=m;c.appendChild(e);setTimeout(()=>{if(e.parentNode)e.remove();},3200);setStatusMsg(m,t);}
+function toast(m,t='info'){if(appSettings.toastsEnabled!==false){const c=document.getElementById('toastContainer');const e=document.createElement('div');e.className='toast '+t;e.textContent=m;c.appendChild(e);setTimeout(()=>{if(e.parentNode)e.remove();},3200);}setStatusMsg(m,t);}
 function setStatusMsg(msg,type){
   const el=document.getElementById('statusMsg');if(!el)return;
   el.textContent=msg;el.className='status-msg '+(type||'info');
@@ -1374,12 +1438,12 @@ function vizMakeLabelEditable(spanId,sliderId){
   span.addEventListener('dblclick',e=>{
     e.stopPropagation();
     if(slider.disabled)return;
-    const cur=parseFloat(slider.value)||0;
+    const cur=slider.dataset.exact!==undefined?parseFloat(slider.dataset.exact):parseFloat(slider.value)||0;
     const inp=document.createElement('input');
     inp.type='number';inp.value=cur;inp.step='any';
     if(slider.min!=='')inp.min=slider.min;
     if(slider.max!=='')inp.max=slider.max;
-    inp.style.cssText='width:54px;font-size:9px;padding:0 2px;background:var(--bg-input);border:1px solid var(--border-focus);border-radius:3px;color:var(--text-primary);font-family:inherit;';
+    inp.style.cssText='width:64px;font-size:9px;padding:0 2px;background:var(--bg-input);border:1px solid var(--border-focus);border-radius:3px;color:var(--text-primary);font-family:inherit;';
     span.textContent='';
     span.appendChild(inp);
     inp.focus();inp.select();
@@ -1389,6 +1453,7 @@ function vizMakeLabelEditable(spanId,sliderId){
       const min=slider.min!==''?parseFloat(slider.min):-Infinity;
       const max=slider.max!==''?parseFloat(slider.max):Infinity;
       v=Math.min(max,Math.max(min,v));
+      slider.dataset.exact=v;
       slider.value=v;
       vizUpdate();
     };
@@ -1400,6 +1465,10 @@ function vizMakeLabelEditable(spanId,sliderId){
     inp.addEventListener('click',ev=>ev.stopPropagation());
     inp.addEventListener('dblclick',ev=>ev.stopPropagation());
   });
+}
+function vizGetVal(id){
+  const el=document.getElementById(id);if(!el)return 0;
+  return el.dataset.exact!==undefined?parseFloat(el.dataset.exact):parseFloat(el.value)||0;
 }
 function vizInit(){
   if(vizInited)return;vizInited=true;
@@ -1413,12 +1482,13 @@ function vizInit(){
   vizScene.add(new THREE.Mesh(new THREE.SphereGeometry(0.012,16,16),new THREE.MeshBasicMaterial({color:0xff3b30})));
   vizScene.add(new THREE.AxesHelper(0.12));
   vizBoxGroup=new THREE.Group();vizScene.add(vizBoxGroup);vizProdsGroup=new THREE.Group();vizScene.add(vizProdsGroup);
-  // Bind all viz inputs
+  // Bind inputs — slider drag clears exact override so label tracks the slider position
   document.querySelectorAll('#viz3d input[type="range"],#viz3d input[type="number"],#viz3d select').forEach(el=>{el.addEventListener('input',vizUpdate);});
   document.querySelectorAll('#viz3d input[type="range"]').forEach(el=>{
     el.dataset.default=el.value;
     el.title='Double-click to reset to default';
-    el.addEventListener('dblclick',()=>{if(el.disabled)return;el.value=el.dataset.default;vizUpdate();});
+    el.addEventListener('input',()=>delete el.dataset.exact);
+    el.addEventListener('dblclick',()=>{if(el.disabled)return;delete el.dataset.exact;el.value=el.dataset.default;vizUpdate();});
   });
   [['vbw-val','vizBW'],['vbh-val','vizBH'],['vbd-val','vizBD'],['vox-val','vizOX'],['voy-val','vizOY'],['voz-val','vizOZ'],['vax-val','vizAX'],['vay-val','vizAY'],['vaz-val','vizAZ'],['vsc-val','vizScale'],['vsx-val','vizSX'],['vsy-val','vizSY'],['vsz-val','vizSZ']].forEach(([spanId,sliderId])=>vizMakeLabelEditable(spanId,sliderId));
   document.getElementById('vizBoxPreset').addEventListener('change',()=>{const p=VIZ_PRESETS[document.getElementById('vizBoxPreset').value];if(p){document.getElementById('vizBW').value=p.w;document.getElementById('vizBH').value=p.h;document.getElementById('vizBD').value=p.d;vizApplyOrigin();vizUpdate();}});
@@ -1470,23 +1540,24 @@ function vizClearGroup(g){while(g.children.length>0){const o=g.children[0];g.rem
 function vizFallback(){const g=new THREE.Group();const m=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.12,0.06),new THREE.MeshStandardMaterial({color:0x388bfd,transparent:true,opacity:0.85}));m.position.y=0.06;g.add(m);g.add(new THREE.AxesHelper(0.05));return g;}
 
 function vizUpdate(){
-  const bw=parseFloat(document.getElementById('vizBW').value)||0.6,bh=parseFloat(document.getElementById('vizBH').value)||0.3,bd=parseFloat(document.getElementById('vizBD').value)||0.21;
-  const ox=parseFloat(document.getElementById('vizOX').value)||0,oy=parseFloat(document.getElementById('vizOY').value)||0,oz=parseFloat(document.getElementById('vizOZ').value)||0;
-  document.getElementById('vbw-val').textContent=bw.toFixed(3);document.getElementById('vbh-val').textContent=bh.toFixed(3);document.getElementById('vbd-val').textContent=bd.toFixed(3);
-  document.getElementById('vox-val').textContent=ox.toFixed(3);document.getElementById('voy-val').textContent=oy.toFixed(3);document.getElementById('voz-val').textContent=oz.toFixed(3);
+  const bw=vizGetVal('vizBW')||0.6,bh=vizGetVal('vizBH')||0.3,bd=vizGetVal('vizBD')||0.21;
+  const ox=vizGetVal('vizOX'),oy=vizGetVal('vizOY'),oz=vizGetVal('vizOZ');
+  const fmtVal=v=>Number.isInteger(v)?String(v):(+v.toPrecision(6)).toString();
+  document.getElementById('vbw-val').textContent=fmtVal(bw);document.getElementById('vbh-val').textContent=fmtVal(bh);document.getElementById('vbd-val').textContent=fmtVal(bd);
+  document.getElementById('vox-val').textContent=fmtVal(ox);document.getElementById('voy-val').textContent=fmtVal(oy);document.getElementById('voz-val').textContent=fmtVal(oz);
   vizClearGroup(vizBoxGroup);
   const bg=new THREE.BoxGeometry(bw,bh,bd);const ag=new THREE.Group();
   ag.add(new THREE.LineSegments(new THREE.EdgesGeometry(bg),new THREE.LineBasicMaterial({color:0x58a6ff})));
   ag.add(new THREE.Mesh(bg,new THREE.MeshBasicMaterial({color:0x1f6feb,transparent:true,opacity:0.12,side:THREE.DoubleSide})));
   ag.position.set(bw/2-ox,bh/2-oy,bd/2-oz);vizBoxGroup.add(ag);
-  const aX=parseFloat(document.getElementById('vizAX').value)||0,aY=parseFloat(document.getElementById('vizAY').value)||0,aZ=parseFloat(document.getElementById('vizAZ').value)||0;
-  const spX=parseFloat(document.getElementById('vizSX').value)||0,spY=parseFloat(document.getElementById('vizSY').value)||0,spZ=parseFloat(document.getElementById('vizSZ').value)||0;
-  const rX=THREE.MathUtils.degToRad(parseFloat(document.getElementById('vizRX').value)||0),rY=THREE.MathUtils.degToRad(parseFloat(document.getElementById('vizRY').value)||0),rZ=THREE.MathUtils.degToRad(parseFloat(document.getElementById('vizRZ').value)||0);
-  const scale=parseFloat(document.getElementById('vizScale').value)||1,maxC=parseInt(document.getElementById('vizCount').value)||1;
+  const aX=vizGetVal('vizAX'),aY=vizGetVal('vizAY'),aZ=vizGetVal('vizAZ');
+  const spX=vizGetVal('vizSX'),spY=vizGetVal('vizSY'),spZ=vizGetVal('vizSZ');
+  const rX=THREE.MathUtils.degToRad(vizGetVal('vizRX')),rY=THREE.MathUtils.degToRad(vizGetVal('vizRY')),rZ=THREE.MathUtils.degToRad(vizGetVal('vizRZ'));
+  const scale=vizGetVal('vizScale')||1,maxC=parseInt(document.getElementById('vizCount').value)||1;
   const plX=Math.max(1,parseInt(document.getElementById('vizPlX').value)||1),plZ=Math.max(1,parseInt(document.getElementById('vizPlZ').value)||1);
-  document.getElementById('vax-val').textContent=aX.toFixed(3);document.getElementById('vay-val').textContent=aY.toFixed(3);document.getElementById('vaz-val').textContent=aZ.toFixed(3);
-  document.getElementById('vsx-val').textContent=spX.toFixed(3);document.getElementById('vsy-val').textContent=spY.toFixed(3);document.getElementById('vsz-val').textContent=spZ.toFixed(3);
-  document.getElementById('vsc-val').textContent=scale.toFixed(3);
+  document.getElementById('vax-val').textContent=fmtVal(aX);document.getElementById('vay-val').textContent=fmtVal(aY);document.getElementById('vaz-val').textContent=fmtVal(aZ);
+  document.getElementById('vsx-val').textContent=fmtVal(spX);document.getElementById('vsy-val').textContent=fmtVal(spY);document.getElementById('vsz-val').textContent=fmtVal(spZ);
+  document.getElementById('vsc-val').textContent=fmtVal(scale);
   vizClearGroup(vizProdsGroup);let placed=0,layerY=0;
   while(placed<maxC){for(let z=0;z<plZ&&placed<maxC;z++){for(let x=0;x<plX&&placed<maxC;x++){const cl=vizCustomModel?vizCustomModel.clone(true):vizFallback();cl.scale.set(scale,scale,scale);cl.rotation.set(rX,rY,rZ);cl.position.set(aX+x*spX,aY+layerY*spY,aZ+z*spZ);vizProdsGroup.add(cl);placed++;}}layerY++;if(layerY>50)break;}
 }
@@ -1559,7 +1630,7 @@ function saveViz3D(){
 function snapshotUndo(){
   if(!data)return;
   try{undoStack.push(JSON.stringify({d:data,li:currentLicenseIdx,pi:currentProductIdx}));}catch(e){return;}
-  if(undoStack.length>UNDO_LIMIT)undoStack.shift();
+  if(undoStack.length>appSettings.undoLimit)undoStack.shift();
   redoStack.length=0;
 }
 function performUndo(){
@@ -1601,6 +1672,49 @@ document.addEventListener('keydown',e=>{const tag=e.target.tagName;
   else if(!vizOpen&&e.key==='ArrowLeft')goPrevProduct();
   else if(!vizOpen&&e.key==='ArrowRight')goNextProduct();
 });
+
+// ==================== ERROR REPORTING ====================
+(function(){
+  const REPO='thawizanator/cpl-product-editor';
+  function showErrorPanel(message,source,lineno,colno,stack){
+    if(document.getElementById('cpl-error-panel'))return;
+    const title=encodeURIComponent('Bug Report: '+String(message).slice(0,120));
+    const body=encodeURIComponent(
+      '## What happened\n<!-- Describe what you were doing when this occurred -->\n\n'+
+      '## Error Details\n'+
+      '**Message:** '+message+'\n'+
+      '**Source:** '+source+'\n'+
+      '**Line/Col:** '+lineno+'/'+colno+'\n'+
+      (stack?'**Stack:**\n```\n'+stack+'\n```\n':'')+
+      '**App Version:** v2.1.0\n'+
+      '**Browser:** '+navigator.userAgent
+    );
+    const url='https://github.com/'+REPO+'/issues/new?title='+title+'&body='+body;
+    const panel=document.createElement('div');
+    panel.id='cpl-error-panel';
+    panel.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:#1a0a0a;border:1px solid #f85149;border-radius:8px;padding:14px 16px;max-width:340px;box-shadow:0 4px 24px rgba(0,0,0,0.7);font-family:inherit;';
+    panel.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+        '<span style="color:#f85149;font-weight:700;font-size:13px;">⚠ Application Error</span>'+
+        '<button onclick="this.closest(\'#cpl-error-panel\').remove()" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:16px;line-height:1;padding:0 2px;">✕</button>'+
+      '</div>'+
+      '<p style="color:#cdd3de;font-size:11px;margin:0 0 10px;line-height:1.5;">'+String(message).slice(0,200)+'</p>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<a href="'+url+'" target="_blank" style="flex:1;display:block;text-align:center;background:#f85149;color:#fff;text-decoration:none;border-radius:5px;padding:6px 8px;font-size:11px;font-weight:600;">🐙 Report on GitHub</a>'+
+        '<button onclick="this.closest(\'#cpl-error-panel\').remove()" style="background:#21262d;color:#8b949e;border:1px solid #30363d;border-radius:5px;padding:6px 10px;font-size:11px;cursor:pointer;">Dismiss</button>'+
+      '</div>';
+    document.body.appendChild(panel);
+  }
+  window.onerror=function(message,source,lineno,colno,error){
+    showErrorPanel(message,source,lineno,colno,error&&error.stack);
+    return true;
+  };
+  window.addEventListener('unhandledrejection',function(e){
+    const msg=e.reason&&e.reason.message?e.reason.message:String(e.reason);
+    const stack=e.reason&&e.reason.stack?e.reason.stack:'';
+    showErrorPanel('Unhandled Promise: '+msg,'(async)',0,0,stack);
+  });
+})();
 </script>
 </body>
 </html>
