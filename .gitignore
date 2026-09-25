@@ -1,0 +1,5 @@
+﻿*.bkup
+*.bak
+*.tmp
+Thumb.db
+.DS_Store
